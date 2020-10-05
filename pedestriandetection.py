@@ -13,14 +13,15 @@ motor1 = AX_12A(id = 1)
 motor1.connect()
 i = AX_12A.listInstances()
 print(i)
+motor1.setGoalPosition(500)
 pos = AX_12A.getAll('getPresentPosition')
 print(pos)
-speed = AX_12A.setAll('setMovingSpeed', 100)
+speed = AX_12A.setAll('setMovingSpeed', 200)
 print(motor1.getMovingSpeed()) 
 
-xone = 0
+xone = 320
 yone = 0
-xtwo = 0
+xtwo = 320
 ytwo = 0
 
 #LD_PRELOAD=/usr/lib/arm-linux-gnueabihf/libatomic.so.1.2.0 python3 pedestriandetection.py
@@ -55,8 +56,8 @@ pedestrians = []
 previouscenter = 0
 
 #center of window
-centerx = 0
-centery = 0
+centerx = 320.0
+centery = 240.0
 
 #distance between previous center in pedestrian and current center
 centerdifference = 0
@@ -98,6 +99,9 @@ def calccenterx(xa, ya, xb, yb):
 def calccentery(xa, ya, xb, yb):
     return (ya+yb)/2
 
+increment = 0
+onebox = False
+
 while True:
     (grabbed, frame) = camera.read()
 
@@ -107,7 +111,9 @@ while True:
 
 
     centerx = width/2
+    centerofrectanglex = centerx
     centery = height/2
+    onebox = False
 
     print("Center: ({}, {})".format(centerx, centery))
         
@@ -144,7 +150,7 @@ while True:
 
             # draw the final bounding boxes
     for i, (xA, yA, xB, yB) in enumerate(pick):
-
+        
         # go through our list of lists data structure
         centeronex = (xA + xB)/2
         distancex = calcdist(xA, yA, xB, yB)
@@ -152,6 +158,15 @@ while True:
         yone = yA
         xtwo = xB
         ytwo = yB
+        centerofrectanglex = calccenterx(xone, xtwo, yone, ytwo)
+        
+        if centerofrectanglex != 0:
+            onebox = True
+            
+        centerofrectangley = calccentery(xone, xtwo, yone, ytwo)
+        windowwidth = width
+        print("windowwidth: ")
+        print(windowwidth)
         print("The pedestrian is {} pixels away.".format(distancex))
         #angle = math.atan2((recy - centery),(recx - centerx))
         angle = calcangle(xA, yA, xB, yB)
@@ -166,12 +181,7 @@ while True:
                 pedestrian.append((xA, yA, xB, yB))
                 assigned = True
                 assignedPedestrians[pedIndex] = True
-
-
-
-
-
-
+                
     for pedestrian in pedestrians:
         while len(pedestrian) > 8: 
             pedestrian.pop(0)
@@ -196,39 +206,67 @@ while True:
             angle = calcangle(avga, avgb, avgc, avgd)
             print("Angle: {}".format(angle))
             cv2.rectangle(orig, (avga, avgb), (avgc, avgd), (0, 255, 0), 2)
-
-    centerofrectanglex = calccenterx(xone, xtwo, yone, ytwo)
-    centerofrectangley = calccentery(xone, xtwo, yone, ytwo)
-    windowwidth = width
-    print(windowwidth)
+                
     
-    while centerofrectanglex > centerx:
-        pos = AX_12A.getAll('getPresentPosition')
-        print(pos)
-        nowpos = pos[0]
-        speed = AX_12A.setAll('setMovingSpeed', 70)
-        print(motor1.getMovingSpeed())
-        nowpos = nowpos+10
-        if nowpos > 1014:
-            nowpos = 1014
-            break
-        motor1.setGoalPosition(nowpos)
+    
+    if onebox == True: 
+        if centerofrectanglex > centerx:
+            pos = AX_12A.getAll('getPresentPosition')
+            print("centerofrectanglex > centerx")
+            print("current position")
+            print(pos)
+            print("centerofrectanglex: ")
+            print(centerofrectanglex)
+            print("centerx: ")
+            print(centerx)
+            nowpos = pos[0]
+            speed = AX_12A.setAll('setMovingSpeed', 160)
+            print(motor1.getMovingSpeed())
+            moveto = int(centerofrectanglex-centerx)
+            nowpos = nowpos+moveto
+            if nowpos > 1020:
+                nowpos = 1020
+                break
+            motor1.setGoalPosition(nowpos)
+
+        if centerofrectanglex == centerx:
+            print("centerofrectanglex=centerx")
+            print("center of rectangle: ")
+            print(centerofrectanglex)
+            print("center of window:")
+            print(centerx)
+            
+        if centerofrectanglex < centerx:
+            pos = AX_12A.getAll('getPresentPosition')
+            print("centerofrectanglex < centerx")
+            print("current position:")
+            print(pos)
+            print("centerofrectanglex: ")
+            print(centerofrectanglex)
+            print("centerx: ")
+            print(centerx)
+            moveto = int(centerx-centerofrectanglex)
+            nowpos = pos[0]
+            speed = AX_12A.setAll('setMovingSpeed', 150)
+            print(motor1.getMovingSpeed())
+            nowpos = nowpos-moveto
+            if nowpos < 0:
+                nowpos = 0
+                break
+            motor1.setGoalPosition(nowpos)
+
+
+
+
+
+
+
+    
+
+
+
         
-    while centerofrectanglex < centerx:
-        pos = AX_12A.getAll('getPresentPosition')
-        print(pos)
-        nowpos = pos[0]
-        speed = AX_12A.setAll('setMovingSpeed', 70)
-        print(motor1.getMovingSpeed())
-        nowpos = nowpos-10
-        if nowpos < 0:
-            nowpos = 0
-            break
-        motor1.setGoalPosition(nowpos)
-
-
-        
-
+    increment = increment + 1
         
     # show some information on the number of bounding boxes
     #filename = imagePath[imagePath.rfind("/") + 1:]
@@ -255,3 +293,4 @@ while True:
     
 camera.release()
 cv2.destroyAllWindows()
+
