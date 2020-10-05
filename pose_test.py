@@ -1,0 +1,20 @@
+from ax12a import *
+
+motor1 = AX_12A(id = 1)
+motor2 = AX_12A(id = 2)
+motor3 = AX_12A(id = 3)
+motor4 = AX_12A(id = 4)
+motor5 = AX_12A(id = 5)
+AX_12A.connectAll()
+tmp = AX_12A.getAll('getPresentPosition')
+print(tmp)
+tmp = AX_12A.setAll('setMovingSpeed', 50)
+print(tmp)
+AX_12A.setPose((512, 200, 1000, 650, 200))
+AX_12A.waitForMotors()
+AX_12A.setPose((512, 525, 710, 625))
+AX_12A.waitForMotors()
+motor1.setGoalPosition(512)
+AX_12A.waitForMotors()
+AX_12A.setPose((512, 200, 1000, 650))
+
