@@ -1,12 +1,12 @@
 # import necessary packages
 from imutils.object_detection import non_max_suppression
-from imutils import paths
+from imutils import paths #imutils version: 0.5.3
 from collections import deque
 import math
-import numpy as np
+import numpy as np #numpy version: 1.16.2
 import argparse
 import imutils
-import cv2
+import cv2 #opencv version: 4.0.1.24
 from ax12a import *
 
 motor1 = AX_12A(id = 1)
