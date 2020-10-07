@@ -7,7 +7,7 @@ import numpy as np #numpy version: 1.16.2
 import argparse
 import imutils
 import cv2 #opencv version: 4.0.1.24
-from ax12a import *
+from ax12a import *  #dynamixel-sdk version: 3.7.31
 
 motor1 = AX_12A(id = 1)
 motor1.connect()
