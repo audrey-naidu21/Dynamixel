@@ -7,7 +7,7 @@ import numpy as np #numpy version: 1.16.2
 import argparse
 import imutils
 import cv2 #opencv version: 4.0.1.24
-from ax12a import *  #dynamixel-sdk version: 3.7.31
+from ax12a import *  #dynamixel-sdk version(if this is needed): 3.7.31
 
 motor1 = AX_12A(id = 1)
 motor1.connect()
@@ -56,7 +56,7 @@ pedestrians = []
 previouscenter = 0
 
 #center of window
-centerx = 320.0
+centerx = 150.0
 centery = 240.0
 
 #distance between previous center in pedestrian and current center
@@ -108,14 +108,17 @@ while True:
 
     width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    #print("width and height")
+   # print(width)
+    #print(height)
 
 
-    centerx = width/2
+    centerx = 300/2
     centerofrectanglex = centerx
     centery = height/2
     onebox = False
 
-    print("Center: ({}, {})".format(centerx, centery))
+    #print("Center: ({}, {})".format(centerx, centery))
         
     if args.get("video") and not grabbed:
         break
@@ -155,10 +158,16 @@ while True:
         centeronex = (xA + xB)/2
         distancex = calcdist(xA, yA, xB, yB)
         xone = xA
+        print("xone")
+        print(xone)
         yone = yA
         xtwo = xB
+        print("xtwo")
+        print(xtwo)
         ytwo = yB
-        centerofrectanglex = calccenterx(xone, xtwo, yone, ytwo)
+        centerofrectanglex = (xone+xtwo)/2
+        print("center of rectanglex:")
+        print(centerofrectanglex)
         
         if centerofrectanglex != 0:
             onebox = True
@@ -182,6 +191,8 @@ while True:
                 assigned = True
                 assignedPedestrians[pedIndex] = True
                 
+    
+                
     for pedestrian in pedestrians:
         while len(pedestrian) > 8: 
             pedestrian.pop(0)
@@ -204,10 +215,14 @@ while True:
             reconex = distancex
             print("The pedestrian is {} pixels away.".format(distancex))
             angle = calcangle(avga, avgb, avgc, avgd)
-            print("Angle: {}".format(angle))
+            #print("Angle: {}".format(angle))
             cv2.rectangle(orig, (avga, avgb), (avgc, avgd), (0, 255, 0), 2)
-                
-    
+            
+    if len(pedestrians) > 0:
+        print("pedestrians list:")
+        print(pedestrians)
+        
+    movebound = 75
     
     if onebox == True: 
         if centerofrectanglex > centerx:
@@ -220,14 +235,20 @@ while True:
             print("centerx: ")
             print(centerx)
             nowpos = pos[0]
-            speed = AX_12A.setAll('setMovingSpeed', 160)
+            speed = AX_12A.setAll('setMovingSpeed', 100)
             print(motor1.getMovingSpeed())
             moveto = int(centerofrectanglex-centerx)
-            nowpos = nowpos+moveto
-            if nowpos > 1020:
-                nowpos = 1020
-                break
-            motor1.setGoalPosition(nowpos)
+            movetopercent = (moveto/300.0)
+            motorcalc = movetopercent*1020
+            
+            #nowpos = int(nowpos+motorcalc)
+            if moveto > movebound or moveto < -movebound:
+                nowpos = nowpos-20
+                if nowpos > 1020:
+                    nowpos = 1020
+                motor1.setGoalPosition(nowpos)
+                
+            
 
         if centerofrectanglex == centerx:
             print("centerofrectanglex=centerx")
@@ -246,14 +267,20 @@ while True:
             print("centerx: ")
             print(centerx)
             moveto = int(centerx-centerofrectanglex)
+            movetopercent = (moveto/300.0)
+            motorcalc = movetopercent*1020
             nowpos = pos[0]
-            speed = AX_12A.setAll('setMovingSpeed', 150)
+            speed = AX_12A.setAll('setMovingSpeed', 100)
             print(motor1.getMovingSpeed())
-            nowpos = nowpos-moveto
-            if nowpos < 0:
-                nowpos = 0
-                break
-            motor1.setGoalPosition(nowpos)
+            
+            #nowpos = int(nowpos-motorcalc)
+            if moveto > movebound or moveto < -movebound:
+                nowpos = nowpos+20
+                if nowpos < 0:
+                    nowpos = 0
+                motor1.setGoalPosition(nowpos)
+                
+            
 
 
 
@@ -271,7 +298,8 @@ while True:
     # show some information on the number of bounding boxes
     #filename = imagePath[imagePath.rfind("/") + 1:]
     filename = "one"
-    print("[INFO] {}: {} original boxes, {} after suppression".format(
+    if len(rects) > 0:
+        print("[INFO] {}: {} original boxes, {} after suppression".format(
         filename, len(rects), len(pick)))
 
     # width = camera.get(3)
